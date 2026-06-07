@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { getToken } from "firebase/messaging";
+import { db, getMessagingInstance } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useNotes } from "@/hooks/useNotes";
 import { usePresence, usePartnerPresence } from "@/hooks/usePresence";
@@ -59,6 +60,39 @@ export default function DashboardPage() {
     await addNote(message, user!.uid, userProfile.displayName, userProfile.pairId!);
   };
 
+  const handleEnableNotifications = async () => {
+    try {
+      const messaging = await getMessagingInstance();
+
+      if (!messaging) {
+        alert("This browser does not support push notifications.");
+        return;
+      }
+
+      const permission = await Notification.requestPermission();
+
+      if (permission !== "granted") {
+        alert("Notification permission was not granted.");
+        return;
+      }
+
+      const token = await getToken(messaging, {
+        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+      });
+
+      if (!token) {
+        alert("No notification token was generated.");
+        return;
+      }
+
+      console.log("FCM token:", token);
+      alert("Notifications enabled successfully.");
+    } catch (error) {
+      console.error("Error enabling notifications:", error);
+      alert("Failed to enable notifications.");
+    }
+  };
+
   return (
     <div className="min-h-dvh relative" style={{ background: "#0F0F0F" }}>
       <div className="ambient-bg" />
@@ -66,8 +100,28 @@ export default function DashboardPage() {
       <DashboardHeader partnerPresence={partnerPresence} partnerName={partnerName} />
 
       <main className="relative z-10 max-w-5xl mx-auto px-4 py-6">
-        {/* Quick Actions */}
+                {/* Quick Actions */}
         <QuickActions onSend={handleQuickSend} />
+
+        <div className="mb-6">
+          <button
+            onClick={handleEnableNotifications}
+            style={{
+              padding: "10px 14px",
+              borderRadius: "12px",
+              border: "1px solid rgba(248,200,220,0.2)",
+              background: "rgba(248,200,220,0.06)",
+              color: "#F8C8DC",
+              fontSize: "13px",
+              fontWeight: 500,
+              cursor: "pointer",
+              fontFamily: "DM Sans, sans-serif",
+              transition: "all 0.2s",
+            }}
+          >
+            Enable Notifications
+          </button>
+        </div>
 
         {/* Mobile Tab Toggle */}
         <div className="flex md:hidden gap-2 mb-6">
