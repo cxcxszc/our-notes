@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { AuthProvider } from "@/lib/auth-context";
-import "@/styles/globals.css";
+import "../styles/globals.css";
 import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
   title: "Our Notes — A Private Space for Two",
   description: "A private real-time shared notes app for couples.",
+  themeColor: "#0F0F0F",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -19,7 +20,6 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0F0F0F",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
