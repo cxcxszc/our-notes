@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { AuthProvider } from "@/lib/auth-context";
 import "@/styles/globals.css";
-import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "Our Notes — A Private Space for Two",
@@ -31,10 +31,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-  <html lang="en">
-    <body>
-      {children}
-      <Analytics />
-    </body>
-  </html>
-);
+    <html lang="en">
+      <body>
+        <AuthProvider>
+          {children}
+          <Analytics />
+        </AuthProvider>
+      </body>
+    </html>
+  );
+}
