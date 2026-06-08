@@ -1,28 +1,37 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { doc, getDoc } from "firebase/firestore";
+import { arrayUnion, doc, getDoc, updateDoc } from "firebase/firestore";
 import { getToken } from "firebase/messaging";
 import { db, getMessagingInstance } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useNotes } from "@/hooks/useNotes";
 import { usePresence, usePartnerPresence } from "@/hooks/usePresence";
+import { useSharedPhotos } from "@/hooks/useSharedPhotos";
 import { NoteCard } from "@/components/notes/NoteCard";
 import { AddNoteForm } from "@/components/notes/AddNoteForm";
 import { QuickActions } from "@/components/notes/QuickActions";
+import { SharedPhotosPanel } from "@/components/photos/SharedPhotosPanel";
 import { DashboardHeader } from "@/components/ui/DashboardHeader";
 import { FloatingWidget } from "@/components/widget/FloatingWidget";
-import { ReactionEmoji } from "@/types";
+import { ReactionEmoji, SharedPhoto } from "@/types";
 
 export default function DashboardPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const [partnerName, setPartnerName] = useState("Partner");
   const [activeTab, setActiveTab] = useState<"mine" | "theirs">("mine");
+  const [notificationState, setNotificationState] = useState<"idle" | "loading" | "enabled" | "unsupported" | "denied">("idle");
+
+  const seenNoteIds = useRef<Set<string>>(new Set());
+  const seenPhotoIds = useRef<Set<string>>(new Set());
+  const reactionCounts = useRef<Map<string, number>>(new Map());
+  const notificationsReady = useRef(false);
 
   const { notes, loading: notesLoading, addNote, updateNote, deleteNote, togglePin, toggleReaction } = useNotes(userProfile?.pairId);
+  const { photos, loading: photosLoading, error: photosError, addPhoto, deletePhoto } = useSharedPhotos(userProfile?.pairId);
 
   usePresence(user?.uid, userProfile?.displayName);
   const partnerPresence = usePartnerPresence(userProfile?.partnerId);
@@ -30,7 +39,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) { router.replace("/auth/login"); return; }
-    if (user && !authLoading && userProfile && !userProfile.pairId) { router.replace("/pair"); }
+    if (userProfile && !userProfile.pairId) { router.replace("/pair"); }
   }, [user, userProfile, authLoading, router]);
 
   useEffect(() => {
@@ -40,39 +49,103 @@ export default function DashboardPage() {
     });
   }, [userProfile?.partnerId]);
 
-  if (authLoading || !userProfile) {
+  const myNotes = useMemo(() => notes.filter((n) => n.authorId === user?.uid), [notes, user?.uid]);
+  const partnerNotes = useMemo(() => notes.filter((n) => n.authorId !== user?.uid), [notes, user?.uid]);
+  const partnerPhotos = useMemo(() => photos.filter((photo) => photo.authorId !== user?.uid), [photos, user?.uid]);
+  const pinnedNotes = useMemo(() => notes.filter((n) => n.pinned), [notes]);
+  const latestPartnerNote = partnerNotes[0] || null;
+  const latestPartnerPhoto = partnerPhotos[0] || null;
+
+  const showBrowserNotification = (title: string, body: string, tag: string, image?: string) => {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    const options: NotificationOptions & { image?: string } = {
+      body,
+      tag,
+      icon: "/icons/icon-192.png",
+    };
+    if (image) options.image = image;
+    new Notification(title, options);
+  };
+
+  useEffect(() => {
+    if (!user || !notes.length) return;
+
+    if (!notificationsReady.current) {
+      notes.forEach((note) => {
+        seenNoteIds.current.add(note.id);
+        reactionCounts.current.set(note.id, Object.values(note.reactions || {}).reduce((sum, users) => sum + users.length, 0));
+      });
+      notificationsReady.current = true;
+      return;
+    }
+
+    notes.forEach((note) => {
+      const totalReactions = Object.values(note.reactions || {}).reduce((sum, users) => sum + users.length, 0);
+      const previousReactions = reactionCounts.current.get(note.id) ?? totalReactions;
+
+      if (!seenNoteIds.current.has(note.id)) {
+        seenNoteIds.current.add(note.id);
+        if (note.authorId !== user.uid) {
+          showBrowserNotification(`💬 New note from ${note.authorName}`, note.content, `note-${note.id}`);
+        }
+      } else if (note.authorId === user.uid && totalReactions > previousReactions) {
+        showBrowserNotification("❤️ New reaction", `${partnerName} reacted to your note.`, `reaction-${note.id}-${totalReactions}`);
+      }
+
+      reactionCounts.current.set(note.id, totalReactions);
+    });
+  }, [notes, partnerName, user]);
+
+  useEffect(() => {
+    if (!user || !photos.length) return;
+
+    const firstRun = seenPhotoIds.current.size === 0;
+    photos.forEach((photo) => {
+      if (!seenPhotoIds.current.has(photo.id)) {
+        seenPhotoIds.current.add(photo.id);
+        if (!firstRun && photo.authorId !== user.uid) {
+          showBrowserNotification(`📸 New photo from ${photo.authorName}`, photo.caption || "A new shared photo is waiting.", `photo-${photo.id}`, photo.imageUrl);
+        }
+      }
+    });
+  }, [photos, user]);
+
+  if (authLoading || !userProfile || !user) {
     return (
-      <div className="min-h-dvh flex items-center justify-center" style={{ background: "#0F0F0F" }}>
-        <div className="w-10 h-10 rounded-full animate-pulse" style={{ background: "linear-gradient(135deg, #F8C8DC, #E8849E)" }} />
+      <div className="app-shell flex min-h-dvh items-center justify-center">
+        <div className="h-12 w-12 animate-pulse rounded-lg" style={{ background: "var(--ink)" }} />
       </div>
     );
   }
 
-  const myNotes = notes.filter((n) => n.authorId === user!.uid);
-  const partnerNotes = notes.filter((n) => n.authorId !== user!.uid);
-  const latestPartnerNote = partnerNotes[0] || null;
-
   const handleAddNote = async (content: string) => {
-    await addNote(content, user!.uid, userProfile.displayName, userProfile.pairId!);
+    await addNote(content, user.uid, userProfile.displayName, userProfile.pairId!);
   };
 
   const handleQuickSend = async (message: string) => {
-    await addNote(message, user!.uid, userProfile.displayName, userProfile.pairId!);
+    await addNote(message, user.uid, userProfile.displayName, userProfile.pairId!);
+  };
+
+  const handleUploadPhoto = async (file: File, caption?: string) => {
+    await addPhoto(file, user.uid, userProfile.displayName, userProfile.pairId!, caption);
+  };
+
+  const handleDeletePhoto = async (photo: SharedPhoto, currentUserId: string) => {
+    await deletePhoto(photo, currentUserId);
   };
 
   const handleEnableNotifications = async () => {
+    setNotificationState("loading");
     try {
       const messaging = await getMessagingInstance();
-
-      if (!messaging) {
-        alert("This browser does not support push notifications.");
+      if (!messaging || !("Notification" in window)) {
+        setNotificationState("unsupported");
         return;
       }
 
       const permission = await Notification.requestPermission();
-
       if (permission !== "granted") {
-        alert("Notification permission was not granted.");
+        setNotificationState("denied");
         return;
       }
 
@@ -80,92 +153,96 @@ export default function DashboardPage() {
         vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
       });
 
-      if (!token) {
-        alert("No notification token was generated.");
-        return;
+      if (token) {
+        await updateDoc(doc(db, "users", user.uid), {
+          notificationTokens: arrayUnion(token),
+        });
+        setNotificationState("enabled");
+        showBrowserNotification("🔔 Notifications enabled", "New notes, reactions, and photos can now pop up here.", "notifications-enabled");
+      } else {
+        setNotificationState("unsupported");
       }
-
-      console.log("FCM token:", token);
-      alert("Notifications enabled successfully.");
     } catch (error) {
       console.error("Error enabling notifications:", error);
-      alert("Failed to enable notifications.");
+      setNotificationState("unsupported");
     }
   };
 
-  return (
-    <div className="min-h-dvh relative" style={{ background: "#0F0F0F" }}>
-      <div className="ambient-bg" />
+  const EmptyState = ({ children }: { children: React.ReactNode }) => (
+    <div className="rounded-lg border border-dashed p-8 text-center text-sm" style={{ borderColor: "var(--line)", color: "var(--muted)", background: "rgba(255, 253, 248, 0.46)" }}>
+      {children}
+    </div>
+  );
 
+  return (
+    <div className="app-shell">
       <DashboardHeader partnerPresence={partnerPresence} partnerName={partnerName} />
 
-      <main className="relative z-10 max-w-5xl mx-auto px-4 py-6">
-                {/* Quick Actions */}
-        <QuickActions onSend={handleQuickSend} />
+      <main className="app-container py-5 md:py-8">
+        <section className="hero-panel mb-5 p-4 md:mb-6 md:p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="section-label mb-2">Shared notebook</p>
+              <h1 className="font-semibold leading-tight" style={{ fontFamily: "Newsreader, serif", fontSize: "clamp(32px, 7vw, 54px)", color: "var(--ink)" }}>
+                {userProfile.displayName} + {partnerName}
+              </h1>
+              <p className="mt-2 max-w-xl text-sm leading-6 md:text-base" style={{ color: "var(--muted)" }}>
+                Real-time notes, quick check-ins, shared photos, and the little moments worth keeping.
+              </p>
+            </div>
+            <div className="grid grid-cols-4 gap-2 text-center md:min-w-[360px]">
+              <div className="rounded-lg border p-3" style={{ borderColor: "var(--line)", background: "rgba(255, 253, 248, 0.58)" }}>
+                <p className="text-lg font-bold">{notes.length}</p>
+                <p className="text-xs" style={{ color: "var(--muted)" }}>Notes</p>
+              </div>
+              <div className="rounded-lg border p-3" style={{ borderColor: "var(--line)", background: "rgba(255, 253, 248, 0.58)" }}>
+                <p className="text-lg font-bold">{photos.length}</p>
+                <p className="text-xs" style={{ color: "var(--muted)" }}>Photos</p>
+              </div>
+              <div className="rounded-lg border p-3" style={{ borderColor: "var(--line)", background: "rgba(255, 253, 248, 0.58)" }}>
+                <p className="text-lg font-bold">{pinnedNotes.length}</p>
+                <p className="text-xs" style={{ color: "var(--muted)" }}>Pinned</p>
+              </div>
+              <div className="rounded-lg border p-3" style={{ borderColor: "var(--line)", background: "rgba(255, 253, 248, 0.58)" }}>
+                <p className="text-lg font-bold">{partnerPresence?.online ? "Live" : "Away"}</p>
+                <p className="text-xs" style={{ color: "var(--muted)" }}>Status</p>
+              </div>
+            </div>
+          </div>
+        </section>
 
-        <div className="mb-6">
-          <button
-            onClick={handleEnableNotifications}
-            style={{
-              padding: "10px 14px",
-              borderRadius: "12px",
-              border: "1px solid rgba(248,200,220,0.2)",
-              background: "rgba(248,200,220,0.06)",
-              color: "#F8C8DC",
-              fontSize: "13px",
-              fontWeight: 500,
-              cursor: "pointer",
-              fontFamily: "DM Sans, sans-serif",
-              transition: "all 0.2s",
-            }}
-          >
-            Enable Notifications
+        <div className="mb-5 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
+          <QuickActions onSend={handleQuickSend} />
+          <button onClick={handleEnableNotifications} className="btn-ghost w-full md:w-auto" style={{ color: "#000" }} disabled={notificationState === "loading" || notificationState === "enabled"}>
+            {notificationState === "loading" && "🔔 Enabling..."}
+            {notificationState === "enabled" && "🔔 Notifications on"}
+            {notificationState === "unsupported" && "⚠️ Notifications unavailable"}
+            {notificationState === "denied" && "🚫 Notifications blocked"}
+            {notificationState === "idle" && "🔔 Enable notifications"}
           </button>
         </div>
 
-        {/* Mobile Tab Toggle */}
-        <div className="flex md:hidden gap-2 mb-6">
-          {(["mine", "theirs"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              style={{
-                flex: 1,
-                padding: "10px",
-                borderRadius: "12px",
-                border: activeTab === tab ? "1px solid rgba(248,200,220,0.2)" : "1px solid #2E2E2E",
-                background: activeTab === tab ? "rgba(248,200,220,0.06)" : "#1A1A1A",
-                color: activeTab === tab ? "#F8C8DC" : "#6B5F64",
-                fontSize: "13px",
-                fontWeight: 500,
-                cursor: "pointer",
-                fontFamily: "DM Sans, sans-serif",
-                transition: "all 0.2s",
-              }}
-            >
-              {tab === "mine" ? `My Notes (${myNotes.length})` : `${partnerName}'s Notes (${partnerNotes.length})`}
-            </button>
-          ))}
+        <div className="segmented-control mb-5 md:hidden">
+          <button onClick={() => setActiveTab("mine")} aria-pressed={activeTab === "mine"}>📝 {userProfile.displayName} ({myNotes.length})</button>
+          <button onClick={() => setActiveTab("theirs")} aria-pressed={activeTab === "theirs"}>💬 {partnerName} ({partnerNotes.length})</button>
         </div>
 
-        {/* Desktop: Two columns. Mobile: Tab-based */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* My Notes Column */}
-          <div className={activeTab === "theirs" ? "hidden md:block" : "block"}>
-            <div className="flex items-center gap-2 mb-4">
-              <h2 style={{ fontFamily: "Playfair Display, serif", fontSize: "20px", color: "#F5F0F2", fontWeight: 500 }}>My Notes</h2>
-              <span style={{ fontSize: "12px", color: "#6B5F64", background: "#1A1A1A", border: "1px solid #2E2E2E", padding: "2px 8px", borderRadius: "20px" }}>{myNotes.length}</span>
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
+          <section className={activeTab === "theirs" ? "hidden md:block" : "block"}>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <p className="section-label">Composer</p>
+                <h2 className="text-xl font-bold">📝 {userProfile.displayName}</h2>
+              </div>
+              <span className="rounded-full border px-2.5 py-1 text-xs font-bold" style={{ borderColor: "var(--line)", color: "var(--muted)" }}>{myNotes.length}</span>
             </div>
             <AddNoteForm onAdd={handleAddNote} />
             {notesLoading ? (
               <div className="space-y-3">
-                {[1, 2].map((i) => <div key={i} className="card" style={{ height: "100px", background: "#1A1A1A", animation: "pulse 2s infinite" }} />)}
+                {[1, 2].map((i) => <div key={i} className="card h-28 animate-pulse" />)}
               </div>
             ) : myNotes.length === 0 ? (
-              <div className="rounded-xl p-8 text-center" style={{ border: "1px dashed #2E2E2E" }}>
-                <div className="text-3xl mb-2">✍️</div>
-                <p style={{ color: "#6B5F64", fontSize: "13px" }}>Write your first note for {partnerName}…</p>
-              </div>
+              <EmptyState>Write your first note for {partnerName}.</EmptyState>
             ) : (
               <AnimatePresence>
                 <div className="space-y-3">
@@ -173,34 +250,33 @@ export default function DashboardPage() {
                     <NoteCard
                       key={note.id}
                       note={note}
-                      currentUserId={user!.uid}
+                      currentUserId={user.uid}
                       isMine={true}
                       onDelete={deleteNote}
                       onEdit={updateNote}
                       onTogglePin={togglePin}
-                      onReact={(id, emoji) => toggleReaction(id, emoji as ReactionEmoji, user!.uid)}
+                      onReact={(id, emoji) => toggleReaction(id, emoji as ReactionEmoji, user.uid)}
                     />
                   ))}
                 </div>
               </AnimatePresence>
             )}
-          </div>
+          </section>
 
-          {/* Partner Notes Column */}
-          <div className={activeTab === "mine" ? "hidden md:block" : "block"}>
-            <div className="flex items-center gap-2 mb-4">
-              <h2 style={{ fontFamily: "Playfair Display, serif", fontSize: "20px", color: "#F5F0F2", fontWeight: 500 }}>{partnerName}'s Notes</h2>
-              <span style={{ fontSize: "12px", color: "#6B5F64", background: "#1A1A1A", border: "1px solid #2E2E2E", padding: "2px 8px", borderRadius: "20px" }}>{partnerNotes.length}</span>
+          <section className={activeTab === "mine" ? "hidden md:block" : "block"}>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <p className="section-label">{partnerName}</p>
+                <h2 className="text-xl font-bold">💬 {partnerName}</h2>
+              </div>
+              <span className="rounded-full border px-2.5 py-1 text-xs font-bold" style={{ borderColor: "var(--line)", color: "var(--muted)" }}>{partnerNotes.length}</span>
             </div>
             {notesLoading ? (
               <div className="space-y-3">
-                {[1, 2].map((i) => <div key={i} className="card" style={{ height: "100px", animation: "pulse 2s infinite" }} />)}
+                {[1, 2].map((i) => <div key={i} className="card h-28 animate-pulse" />)}
               </div>
             ) : partnerNotes.length === 0 ? (
-              <div className="rounded-xl p-8 text-center" style={{ border: "1px dashed #2E2E2E" }}>
-                <div className="text-3xl mb-2">💭</div>
-                <p style={{ color: "#6B5F64", fontSize: "13px" }}>Waiting for {partnerName} to write…</p>
-              </div>
+              <EmptyState>Waiting for {partnerName} to write.</EmptyState>
             ) : (
               <AnimatePresence>
                 <div className="space-y-3">
@@ -208,26 +284,35 @@ export default function DashboardPage() {
                     <NoteCard
                       key={note.id}
                       note={note}
-                      currentUserId={user!.uid}
+                      currentUserId={user.uid}
                       isMine={false}
                       onDelete={deleteNote}
                       onEdit={updateNote}
                       onTogglePin={togglePin}
-                      onReact={(id, emoji) => toggleReaction(id, emoji as ReactionEmoji, user!.uid)}
+                      onReact={(id, emoji) => toggleReaction(id, emoji as ReactionEmoji, user.uid)}
                     />
                   ))}
                 </div>
               </AnimatePresence>
             )}
-          </div>
+          </section>
         </div>
+
+        <SharedPhotosPanel
+          photos={photos}
+          loading={photosLoading}
+          error={photosError}
+          currentUserId={user.uid}
+          onUpload={handleUploadPhoto}
+          onDelete={handleDeletePhoto}
+        />
       </main>
 
-      {/* Floating Widget */}
       <FloatingWidget
         latestPartnerNote={latestPartnerNote}
+        latestPartnerPhoto={latestPartnerPhoto}
         partnerName={partnerName}
-        currentUserId={user!.uid}
+        currentUserId={user.uid}
       />
     </div>
   );

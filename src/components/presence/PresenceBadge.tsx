@@ -10,27 +10,20 @@ interface PresenceBadgeProps {
 
 export function PresenceBadge({ presence, partnerName }: PresenceBadgeProps) {
   const isOnline = presence?.online === true;
+  const statusText = isOnline ? "Online" : presence ? `Last seen ${formatLastSeen(presence.lastSeen)}` : "Offline";
 
   return (
-    <div className="flex items-center gap-2">
-      <div
+    <div className="flex min-w-0 items-center gap-2 rounded-full border px-2.5 py-1.5" style={{ background: "rgba(255, 253, 248, 0.64)", borderColor: "var(--line)" }}>
+      <span
+        className="h-2.5 w-2.5 shrink-0 rounded-full"
         style={{
-          width: "8px",
-          height: "8px",
-          borderRadius: "50%",
-          background: isOnline ? "#4ade80" : "#6B5F64",
-          boxShadow: isOnline ? "0 0 6px rgba(74,222,128,0.6)" : "none",
-          flexShrink: 0,
-          transition: "background 0.3s, box-shadow 0.3s",
+          background: isOnline ? "#4f9a64" : "var(--soft)",
+          boxShadow: isOnline ? "0 0 0 4px rgba(79, 154, 100, 0.14)" : "none",
         }}
       />
-      <div>
-        <span style={{ fontSize: "13px", color: "#F5F0F2", fontWeight: 500 }}>
-          {partnerName || presence?.displayName || "Partner"}
-        </span>
-        <span style={{ fontSize: "11px", color: "#6B5F64", marginLeft: "6px" }}>
-          {isOnline ? "Online" : presence ? `Last seen ${formatLastSeen(presence.lastSeen)}` : "Offline"}
-        </span>
+      <div className="min-w-0 leading-tight">
+        <p className="max-w-[92px] truncate text-xs font-bold sm:max-w-[150px]" style={{ color: "var(--ink)" }}>{partnerName || presence?.displayName || "Partner"}</p>
+        <p className="hidden text-[11px] sm:block" style={{ color: "var(--muted)" }}>{statusText}</p>
       </div>
     </div>
   );

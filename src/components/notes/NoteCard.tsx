@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Note, REACTIONS, ReactionEmoji } from "@/types";
 import { formatNoteTime } from "@/lib/utils";
 
@@ -18,120 +18,87 @@ interface NoteCardProps {
 export function NoteCard({ note, currentUserId, onDelete, onEdit, onTogglePin, onReact, isMine }: NoteCardProps) {
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState(note.content);
-  const [showActions, setShowActions] = useState(false);
 
   const handleSaveEdit = () => {
-    if (editContent.trim()) {
-      onEdit(note.id, editContent.trim());
-    }
+    if (editContent.trim()) onEdit(note.id, editContent.trim());
     setEditing(false);
   };
 
-  const totalReactions = Object.values(note.reactions).reduce((sum, users) => sum + users.length, 0);
-
   return (
-    <motion.div
+    <motion.article
       layout
-      initial={{ opacity: 0, scale: 0.95, y: 16 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.9, y: -8 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      className="card relative group"
-      style={{
-        borderColor: note.pinned ? "rgba(248,200,220,0.2)" : undefined,
-        boxShadow: note.pinned ? "0 0 20px rgba(248,200,220,0.06)" : undefined,
-      }}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.24, ease: "easeOut" }}
+      className={`note-card group ${isMine ? "mine" : "theirs"} ${note.pinned ? "pinned" : ""}`}
     >
-      {/* Pin indicator */}
-      {note.pinned && (
-        <div style={{ position: "absolute", top: "-8px", left: "16px", fontSize: "16px" }}>📌</div>
-      )}
-
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold" style={{ background: isMine ? "linear-gradient(135deg, #F4A6C1, #E8849E)" : "linear-gradient(135deg, #6B5F64, #3A3A3A)", color: isMine ? "#0F0F0F" : "#F5F0F2" }}>
-            {note.authorName[0]?.toUpperCase()}
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <div
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+            style={{
+              background: isMine ? "var(--ink)" : "var(--sage)",
+              color: "#fffdf8",
+            }}
+          >
+            {note.authorName[0]?.toUpperCase() || "?"}
           </div>
-          <span style={{ fontSize: "12px", color: "#A89BA2", fontWeight: 500 }}>{note.authorName}</span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold" style={{ color: "var(--ink)" }}>{note.authorName}</p>
+            <p className="text-xs" style={{ color: "var(--muted)" }}>{formatNoteTime(note.createdAt)}</p>
+          </div>
         </div>
-        <span style={{ fontSize: "11px", color: "#6B5F64" }}>{formatNoteTime(note.createdAt)}</span>
+        <div className="flex shrink-0 items-center gap-1">
+          {note.pinned && <span className="rounded-full px-2 py-1 text-xs font-bold" style={{ background: "var(--accent-soft)", color: "var(--accent-strong)" }}>📌 Pinned</span>}
+          {isMine && (
+            <div className="flex gap-1 opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
+              <button onClick={() => onTogglePin(note.id, note.pinned)} className="btn-icon" title={note.pinned ? "Unpin" : "Pin"} aria-label={note.pinned ? "Unpin note" : "Pin note"}>{note.pinned ? "📍" : "📌"}</button>
+              <button onClick={() => setEditing(true)} className="btn-icon" title="Edit" aria-label="Edit note">✏️</button>
+              <button onClick={() => onDelete(note.id)} className="btn-icon" title="Delete" aria-label="Delete note" style={{ color: "var(--accent-strong)" }}>🗑️</button>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Content */}
       {editing ? (
-        <div className="space-y-2">
+        <div className="space-y-3">
           <textarea
             className="input-base focus-ring"
-            style={{ minHeight: "80px", fontSize: "14px" }}
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
             autoFocus
           />
           <div className="flex gap-2">
-            <button onClick={handleSaveEdit} className="btn-primary" style={{ padding: "8px 16px", fontSize: "13px" }}>Save</button>
-            <button onClick={() => { setEditing(false); setEditContent(note.content); }} className="btn-ghost" style={{ padding: "8px 16px", fontSize: "13px" }}>Cancel</button>
+            <button onClick={handleSaveEdit} className="btn-primary" type="button">💾 Save</button>
+            <button onClick={() => { setEditing(false); setEditContent(note.content); }} className="btn-ghost" type="button">↩️ Cancel</button>
           </div>
         </div>
       ) : (
-        <p style={{ fontSize: "14px", lineHeight: "1.6", color: "#F5F0F2", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{note.content}</p>
+        <p className="whitespace-pre-wrap break-words text-[15px] leading-7" style={{ color: "var(--ink)" }}>{note.content}</p>
       )}
 
-      {/* Reactions */}
-      <div className="mt-3 flex flex-wrap items-center gap-1">
+      <div className="mt-4 flex flex-wrap items-center gap-1.5">
         {REACTIONS.map((emoji) => {
-          const users = note.reactions[emoji] || [];
+          const users = note.reactions?.[emoji] || [];
           const hasReacted = users.includes(currentUserId);
           return (
             <button
               key={emoji}
               onClick={() => onReact(note.id, emoji)}
-              className="transition-all duration-150"
+              className="rounded-full border px-2.5 py-1 text-sm transition"
               style={{
-                fontSize: "13px",
-                padding: "3px 8px",
-                borderRadius: "20px",
-                border: hasReacted ? "1px solid rgba(248,200,220,0.3)" : "1px solid transparent",
-                background: hasReacted ? "rgba(248,200,220,0.08)" : "transparent",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "3px",
+                borderColor: hasReacted ? "rgba(199, 95, 84, 0.36)" : "var(--line)",
+                background: hasReacted ? "var(--accent-soft)" : "rgba(255, 253, 248, 0.48)",
               }}
+              aria-label={`React with ${emoji}`}
             >
               <span>{emoji}</span>
-              {users.length > 0 && <span style={{ fontSize: "11px", color: "#A89BA2" }}>{users.length}</span>}
+              {users.length > 0 && <span className="ml-1 text-xs font-bold" style={{ color: "var(--muted)" }}>{users.length}</span>}
             </button>
           );
         })}
       </div>
-
-      {/* Actions (visible on hover) */}
-      {isMine && (
-        <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <button
-            onClick={() => onTogglePin(note.id, note.pinned)}
-            title={note.pinned ? "Unpin" : "Pin"}
-            style={{ width: "28px", height: "28px", borderRadius: "8px", background: "#222", border: "1px solid #2E2E2E", cursor: "pointer", fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center" }}
-          >
-            {note.pinned ? "📌" : "🔖"}
-          </button>
-          <button
-            onClick={() => setEditing(true)}
-            title="Edit"
-            style={{ width: "28px", height: "28px", borderRadius: "8px", background: "#222", border: "1px solid #2E2E2E", cursor: "pointer", fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center" }}
-          >
-            ✏️
-          </button>
-          <button
-            onClick={() => onDelete(note.id)}
-            title="Delete"
-            style={{ width: "28px", height: "28px", borderRadius: "8px", background: "#222", border: "1px solid rgba(232,132,158,0.2)", cursor: "pointer", fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center" }}
-          >
-            🗑️
-          </button>
-        </div>
-      )}
-    </motion.div>
+    </motion.article>
   );
 }

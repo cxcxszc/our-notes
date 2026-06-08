@@ -1,16 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import { AuthProvider } from "@/lib/auth-context";
 import "../styles/globals.css";
-import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
-  title: "Our Notes — A Private Space for Two",
+  title: "Our Notes - A Private Space for Two",
   description: "A private real-time shared notes app for couples.",
-  themeColor: "#0F0F0F",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
     title: "Our Notes",
   },
   icons: {
@@ -20,6 +18,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  themeColor: "#f7f3ec",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -33,10 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AuthProvider>
-          {children}
-          <Analytics />
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

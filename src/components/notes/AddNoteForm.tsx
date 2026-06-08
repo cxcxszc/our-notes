@@ -35,17 +35,14 @@ export function AddNoteForm({ onAdd }: AddNoteFormProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setOpen(true)}
-            className="w-full rounded-xl px-4 py-3 text-left transition-colors duration-200"
+            className="focus-ring w-full rounded-lg border px-4 py-3 text-left text-sm font-semibold transition"
             style={{
-              background: "#1A1A1A",
-              border: "1px dashed #2E2E2E",
-              color: "#6B5F64",
-              fontSize: "14px",
-              cursor: "pointer",
-              fontFamily: "DM Sans, sans-serif",
+              background: "rgba(255, 253, 248, 0.72)",
+              borderColor: "var(--line)",
+              color: "var(--muted)",
             }}
           >
-            + Write a note…
+            📝 Write a note...
           </motion.button>
         ) : (
           <motion.form
@@ -59,31 +56,28 @@ export function AddNoteForm({ onAdd }: AddNoteFormProps) {
           >
             <textarea
               className="input-base focus-ring"
-              style={{ minHeight: "90px", fontSize: "14px", background: "#222" }}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="What's on your heart?"
+              placeholder="What's on your mind?"
               autoFocus
               maxLength={1000}
             />
-            <div className="flex items-center justify-between">
-              <span style={{ fontSize: "11px", color: "#6B5F64" }}>{content.length}/1000</span>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <span className="text-xs" style={{ color: "var(--muted)" }}>{content.length}/1000</span>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => { setOpen(false); setContent(""); }}
-                  className="btn-ghost"
-                  style={{ padding: "8px 14px", fontSize: "13px" }}
+                  className="btn-ghost flex-1 sm:flex-none"
                 >
-                  Cancel
+                  ↩️ Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn-primary"
-                  style={{ padding: "8px 16px", fontSize: "13px" }}
+                  className="btn-primary flex-1 sm:flex-none"
                   disabled={loading || !content.trim()}
                 >
-                  {loading ? "Sending…" : "Send 💌"}
+                  {loading ? "💌 Sending..." : "💌 Send"}
                 </button>
               </div>
             </div>

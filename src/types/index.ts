@@ -6,6 +6,7 @@ export interface User {
   partnerId?: string;
   pairId?: string;
   createdAt: Date;
+  notificationTokens?: string[];
 }
 
 export interface Note {
@@ -17,9 +18,20 @@ export interface Note {
   pinned: boolean;
   createdAt: Date;
   updatedAt: Date;
-  reactions: Record<string, string[]>; // emoji -> [userId]
+  reactions: Record<string, string[]>;
   isQuickAction?: boolean;
   quickActionType?: string;
+}
+
+export interface SharedPhoto {
+  id: string;
+  pairId: string;
+  authorId: string;
+  authorName: string;
+  imageUrl: string;
+  storagePath: string;
+  caption?: string;
+  createdAt: Date;
 }
 
 export type ReactionEmoji = "❤️" | "🥹" | "😍" | "😂" | "🔥";
@@ -47,9 +59,9 @@ export interface QuickAction {
 }
 
 export const QUICK_ACTIONS: QuickAction[] = [
-  { emoji: "❤️", label: "I Love You", message: "❤️ I love you so much!" },
-  { emoji: "🥺", label: "Miss You", message: "🥺 I miss you so much right now..." },
-  { emoji: "🌸", label: "Thinking Of You", message: "🌸 Just thinking of you~" },
-  { emoji: "☕", label: "Have You Eaten?", message: "☕ Hey, have you eaten yet? Don't forget to take care of yourself!" },
-  { emoji: "💤", label: "Rest Well", message: "💤 Get some rest, okay? Sweet dreams 🌙" },
+  { emoji: "❤️", label: "Love you", message: "❤️ I love you so much!" },
+  { emoji: "🥺", label: "Miss you", message: "🥺 I miss you so much right now..." },
+  { emoji: "🌸", label: "Thinking of you", message: "🌸 Just thinking of you." },
+  { emoji: "☕", label: "Check in", message: "☕ Hey, have you eaten yet? Don't forget to take care of yourself." },
+  { emoji: "💤", label: "Rest well", message: "💤 Get some rest, okay? Sweet dreams 🌙" },
 ];

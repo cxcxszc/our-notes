@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { QUICK_ACTIONS } from "@/types";
+import { useState } from "react";
 
 interface QuickActionsProps {
   onSend: (message: string) => Promise<void>;
@@ -22,38 +22,31 @@ export function QuickActions({ onSend }: QuickActionsProps) {
   };
 
   return (
-    <div className="mb-6">
-      <p style={{ fontSize: "11px", color: "#6B5F64", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "10px" }}>
-        Quick Send
-      </p>
-      <div className="flex flex-wrap gap-2">
+    <section className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="section-label">Quick send</p>
+        {sending && <span className="text-xs font-medium" style={{ color: "var(--muted)" }}>Sending...</span>}
+      </div>
+      <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible">
         {QUICK_ACTIONS.map((action) => (
           <motion.button
             key={action.label}
-            whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => handleSend(action)}
             disabled={!!sending}
-            className="transition-all duration-200"
+            className="shrink-0 rounded-full border px-3 py-2 text-sm font-semibold transition"
             style={{
-              padding: "7px 13px",
-              borderRadius: "20px",
-              border: "1px solid rgba(248,200,220,0.12)",
-              background: sending === action.label ? "rgba(248,200,220,0.12)" : "rgba(248,200,220,0.04)",
-              color: "#A89BA2",
-              fontSize: "12px",
-              cursor: sending ? "not-allowed" : "pointer",
-              fontFamily: "DM Sans, sans-serif",
-              display: "flex",
-              alignItems: "center",
-              gap: "5px",
+              borderColor: sending === action.label ? "rgba(199, 95, 84, 0.42)" : "var(--line)",
+              background: sending === action.label ? "var(--accent-soft)" : "rgba(255, 253, 248, 0.76)",
+              color: "var(--ink)",
               opacity: sending && sending !== action.label ? 0.5 : 1,
             }}
           >
-            <span>{action.emoji}</span>
-            <span>{action.label}</span>
+            <span aria-hidden="true">{action.emoji}</span>
+            <span className="ml-1">{action.label}</span>
           </motion.button>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
