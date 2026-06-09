@@ -16,24 +16,24 @@ interface SharedPhotosPanelProps {
 
 export function SharedPhotosPanel({ photos, loading, error, currentUserId, onUpload, onDelete }: SharedPhotosPanelProps) {
   return (
-    <section className="mt-6 space-y-4">
+    <section className="space-y-4">
       <PhotoUploader onUpload={onUpload} />
 
       {error ? (
-        <div className="rounded-lg border p-4 text-sm font-semibold" style={{ background: "rgba(199, 95, 84, 0.10)", borderColor: "rgba(199, 95, 84, 0.28)", color: "var(--accent-strong)" }}>
+        <div className="rounded-2xl border p-4 text-sm font-semibold" style={{ background: "rgba(239, 68, 68, 0.08)", borderColor: "rgba(239, 68, 68, 0.22)", color: "var(--app-danger)" }}>
           {error}
         </div>
       ) : loading ? (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((item) => <div key={item} className="card h-52 animate-pulse" />)}
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[1, 2, 3].map((item) => (
+            <div key={item} className="app-card h-52 animate-pulse" />
+          ))}
         </div>
       ) : photos.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-8 text-center text-sm" style={{ borderColor: "var(--line)", color: "var(--muted)", background: "rgba(255, 253, 248, 0.46)" }}>
-          Share the first photo here.
-        </div>
+        <div className="app-empty">Share the first photo here.</div>
       ) : (
         <AnimatePresence>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             {photos.map((photo) => (
               <PhotoCard key={photo.id} photo={photo} currentUserId={currentUserId} onDelete={onDelete} />
             ))}

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Note, SharedPhoto } from "@/types";
 import { formatNoteTime } from "@/lib/utils";
 
@@ -29,6 +29,7 @@ export function FloatingWidget({ latestPartnerNote, latestPartnerPhoto, partnerN
     if (!latestPartnerNote && latestPartnerPhoto) {
       return { type: "photo", id: latestPartnerPhoto.id, createdAt: latestPartnerPhoto.createdAt, imageUrl: latestPartnerPhoto.imageUrl, caption: latestPartnerPhoto.caption };
     }
+
     return latestPartnerPhoto!.createdAt > latestPartnerNote!.createdAt
       ? { type: "photo", id: latestPartnerPhoto!.id, createdAt: latestPartnerPhoto!.createdAt, imageUrl: latestPartnerPhoto!.imageUrl, caption: latestPartnerPhoto!.caption }
       : { type: "note", id: latestPartnerNote!.id, createdAt: latestPartnerNote!.createdAt, content: latestPartnerNote!.content };
@@ -45,42 +46,44 @@ export function FloatingWidget({ latestPartnerNote, latestPartnerPhoto, partnerN
   if (!visible || !latestItem) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-[calc(100vw-32px)] max-w-[320px] sm:bottom-6 sm:right-6">
+    <div className="fixed right-4 top-4 z-50 w-[calc(100vw-32px)] max-w-[320px]">
       <AnimatePresence>
         {!minimized ? (
           <motion.div
             key="expanded"
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            initial={{ opacity: 0, y: -12, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="rounded-lg border p-4"
-            style={{ background: "rgba(255, 253, 248, 0.94)", borderColor: "var(--line)", boxShadow: "var(--shadow)", backdropFilter: "blur(18px)" }}
+            exit={{ opacity: 0, y: -12, scale: 0.96 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className="app-card p-4"
           >
             <div className="mb-3 flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-2">
-                <span aria-hidden="true">{latestItem.type === "photo" ? "📸" : "💬"}</span>
-                <span className="truncate text-xs font-bold" style={{ color: "var(--ink)" }}>
-                  {latestItem.type === "photo" ? `New photo from ${partnerName}` : `New note from ${partnerName}`}
-                </span>
-              </div>
+              <p className="truncate text-xs font-bold" style={{ color: "var(--app-text)" }}>
+                {latestItem.type === "photo" ? `New photo from ${partnerName}` : `New note from ${partnerName}`}
+              </p>
               <div className="flex gap-1">
-                <button onClick={() => setMinimized(true)} className="btn-icon !h-7 !min-h-7 !w-7" aria-label="Minimize widget" title="Minimize">➖</button>
-                <button onClick={() => setVisible(false)} className="btn-icon !h-7 !min-h-7 !w-7" aria-label="Close widget" title="Close">✖️</button>
+                <button onClick={() => setMinimized(true)} className="app-icon-button h-7 w-7 text-xs" aria-label="Minimize widget" title="Minimize" type="button">
+                  _
+                </button>
+                <button onClick={() => setVisible(false)} className="app-icon-button h-7 w-7 text-xs" aria-label="Close widget" title="Close" type="button">
+                  x
+                </button>
               </div>
             </div>
 
             {latestItem.type === "photo" ? (
               <div className="space-y-2">
-                <img src={latestItem.imageUrl} alt={latestItem.caption || `Shared by ${partnerName}`} className="aspect-[4/3] w-full rounded-lg object-cover" />
-                {latestItem.caption && <p className="break-words text-sm leading-6" style={{ color: "var(--ink)" }}>{latestItem.caption}</p>}
+                <img src={latestItem.imageUrl} alt={latestItem.caption || `Shared by ${partnerName}`} className="aspect-[4/3] w-full rounded-2xl object-cover" />
+                {latestItem.caption && <p className="break-words text-sm leading-relaxed" style={{ color: "var(--app-text)" }}>{latestItem.caption}</p>}
               </div>
             ) : (
-              <p className="break-words text-sm leading-6" style={{ color: "var(--ink)" }}>
+              <p className="break-words text-sm leading-relaxed" style={{ color: "var(--app-text)" }}>
                 {latestItem.content}
               </p>
             )}
-            <p className="mt-2 text-xs" style={{ color: "var(--muted)" }}>{formatNoteTime(latestItem.createdAt)}</p>
+            <p className="mt-2 text-xs" style={{ color: "var(--app-dimmed)" }}>
+              {formatNoteTime(latestItem.createdAt)}
+            </p>
           </motion.div>
         ) : (
           <motion.button
@@ -89,11 +92,11 @@ export function FloatingWidget({ latestPartnerNote, latestPartnerPhoto, partnerN
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={() => setMinimized(false)}
-            className="ml-auto flex h-14 w-14 items-center justify-center rounded-full border text-2xl shadow-lg"
-            style={{ background: "var(--ink)", borderColor: "var(--line)", color: "#fffdf8" }}
+            className="app-chip ml-auto flex"
+            type="button"
             aria-label="Open latest shared item"
           >
-            {latestItem.type === "photo" ? "📸" : "💬"}
+            New
           </motion.button>
         )}
       </AnimatePresence>

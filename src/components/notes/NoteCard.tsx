@@ -15,14 +15,25 @@ interface NoteCardProps {
   isMine: boolean;
 }
 
-export function NoteCard({ note, currentUserId, onDelete, onEdit, onTogglePin, onReact, isMine }: NoteCardProps) {
+export function NoteCard({
+  note,
+  currentUserId,
+  onDelete,
+  onEdit,
+  onTogglePin,
+  onReact,
+  isMine,
+}: NoteCardProps) {
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState(note.content);
 
   const handleSaveEdit = () => {
-    if (editContent.trim()) onEdit(note.id, editContent.trim());
+    const next = editContent.trim();
+    if (next) onEdit(note.id, next);
     setEditing(false);
   };
+
+  const authorLabel = isMine ? "From You" : `From ${note.authorName}`;
 
   return (
     <motion.article
@@ -30,74 +41,117 @@ export function NoteCard({ note, currentUserId, onDelete, onEdit, onTogglePin, o
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.24, ease: "easeOut" }}
-      className={`note-card group ${isMine ? "mine" : "theirs"} ${note.pinned ? "pinned" : ""}`}
+      transition={{ duration: 0.22, ease: "easeOut" }}
+      className="app-card p-5"
+      style={{ borderColor: note.pinned ? "var(--app-pink-border)" : "var(--app-border)" }}
     >
       <div className="mb-3 flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <div
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold"
-            style={{
-              background: isMine ? "var(--ink)" : "var(--sage)",
-              color: "#fffdf8",
-            }}
-          >
-            {note.authorName[0]?.toUpperCase() || "?"}
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-xl" aria-hidden="true">
+              💌
+            </span>
+            <p className="truncate text-sm font-bold" style={{ color: "var(--app-pink)" }}>
+              {authorLabel}
+            </p>
           </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-bold" style={{ color: "var(--ink)" }}>{note.authorName}</p>
-            <p className="text-xs" style={{ color: "var(--muted)" }}>{formatNoteTime(note.createdAt)}</p>
+          <p className="mt-1 text-xs" style={{ color: "var(--app-dimmed)" }}>
+            {formatNoteTime(note.createdAt)}
+          </p>
+        </div>
+
+        {isMine && (
+          <div className="flex shrink-0 items-center gap-1">
+            <button
+              onClick={() => onTogglePin(note.id, note.pinned)}
+              className="app-icon-button h-8 w-8 text-xs"
+              type="button"
+              aria-label={note.pinned ? "Unpin note" : "Pin note"}
+              title={note.pinned ? "Unpin" : "Pin"}
+            >
+              {note.pinned ? "P" : "+"}
+            </button>
+            <button
+              onClick={() => setEditing(true)}
+              className="app-icon-button h-8 w-8 text-xs"
+              type="button"
+              aria-label="Edit note"
+              title="Edit"
+            >
+              E
+            </button>
+            <button
+              onClick={() => onDelete(note.id)}
+              className="app-icon-button h-8 w-8 text-xs"
+              type="button"
+              aria-label="Delete note"
+              title="Delete"
+              style={{ color: "var(--app-danger)" }}
+            >
+              D
+            </button>
           </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-          {note.pinned && <span className="rounded-full px-2 py-1 text-xs font-bold" style={{ background: "var(--accent-soft)", color: "var(--accent-strong)" }}>📌 Pinned</span>}
-          {isMine && (
-            <div className="flex gap-1 opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
-              <button onClick={() => onTogglePin(note.id, note.pinned)} className="btn-icon" title={note.pinned ? "Unpin" : "Pin"} aria-label={note.pinned ? "Unpin note" : "Pin note"}>{note.pinned ? "📍" : "📌"}</button>
-              <button onClick={() => setEditing(true)} className="btn-icon" title="Edit" aria-label="Edit note">✏️</button>
-              <button onClick={() => onDelete(note.id)} className="btn-icon" title="Delete" aria-label="Delete note" style={{ color: "var(--accent-strong)" }}>🗑️</button>
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
       {editing ? (
         <div className="space-y-3">
           <textarea
-            className="input-base focus-ring"
+            className="app-textarea"
             value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
+            onChange={(event) => setEditContent(event.target.value)}
             autoFocus
           />
           <div className="flex gap-2">
-            <button onClick={handleSaveEdit} className="btn-primary" type="button">💾 Save</button>
-            <button onClick={() => { setEditing(false); setEditContent(note.content); }} className="btn-ghost" type="button">↩️ Cancel</button>
+            <button onClick={handleSaveEdit} className="app-primary-button" type="button">
+              Save
+            </button>
+            <button
+              onClick={() => {
+                setEditing(false);
+                setEditContent(note.content);
+              }}
+              className="app-ghost-button"
+              type="button"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       ) : (
-        <p className="whitespace-pre-wrap break-words text-[15px] leading-7" style={{ color: "var(--ink)" }}>{note.content}</p>
+        <p className="whitespace-pre-wrap break-words text-base leading-relaxed" style={{ color: "var(--app-text)" }}>
+          {note.content}
+        </p>
       )}
 
-      <div className="mt-4 flex flex-wrap items-center gap-1.5">
-        {REACTIONS.map((emoji) => {
-          const users = note.reactions?.[emoji] || [];
-          const hasReacted = users.includes(currentUserId);
-          return (
-            <button
-              key={emoji}
-              onClick={() => onReact(note.id, emoji)}
-              className="rounded-full border px-2.5 py-1 text-sm transition"
-              style={{
-                borderColor: hasReacted ? "rgba(199, 95, 84, 0.36)" : "var(--line)",
-                background: hasReacted ? "var(--accent-soft)" : "rgba(255, 253, 248, 0.48)",
-              }}
-              aria-label={`React with ${emoji}`}
-            >
-              <span>{emoji}</span>
-              {users.length > 0 && <span className="ml-1 text-xs font-bold" style={{ color: "var(--muted)" }}>{users.length}</span>}
-            </button>
-          );
-        })}
+      <div className="mt-4 flex items-end justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {REACTIONS.map((emoji) => {
+            const users = note.reactions?.[emoji] || [];
+            const hasReacted = users.includes(currentUserId);
+
+            return (
+              <button
+                key={emoji}
+                onClick={() => onReact(note.id, emoji)}
+                className="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition"
+                style={{
+                  background: hasReacted ? "var(--app-pink-surface)" : "var(--app-overlay)",
+                  borderColor: hasReacted ? "var(--app-pink-border)" : "var(--app-border)",
+                  opacity: hasReacted || users.length > 0 ? 1 : 0.5,
+                }}
+                type="button"
+                aria-label={`React with ${emoji}`}
+              >
+                <span>{emoji}</span>
+                {users.length > 0 && <span style={{ color: "var(--app-muted)" }}>{users.length}</span>}
+              </button>
+            );
+          })}
+        </div>
+        <span className="shrink-0 text-xs" style={{ color: "var(--app-dimmed)" }}>
+          {formatNoteTime(note.createdAt)}
+        </span>
       </div>
     </motion.article>
   );

@@ -1,46 +1,58 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
-import { PresenceBadge } from "@/components/presence/PresenceBadge";
-import { PresenceData } from "@/types";
 
 interface DashboardHeaderProps {
-  partnerPresence: PresenceData | null;
-  partnerName: string;
+  partnerPresence?: { online?: boolean } | null;
+  partnerName?: string;
 }
 
-export function DashboardHeader({ partnerPresence, partnerName }: DashboardHeaderProps) {
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 5) return "Good Night";
+  if (hour < 12) return "Good Morning";
+  if (hour < 17) return "Good Afternoon";
+  if (hour < 21) return "Good Evening";
+  return "Good Night";
+}
+
+export function DashboardHeader({ partnerPresence, partnerName = "Partner" }: DashboardHeaderProps) {
   const { logout } = useAuth();
 
   return (
-    <motion.header
-      initial={{ opacity: 0, y: -12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.32 }}
-      className="app-header"
-    >
-      <div className="app-container flex min-h-16 items-center justify-between gap-3 py-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg font-bold" style={{ background: "var(--ink)", color: "#fffdf8" }}>
-            ON
-          </div>
+    <header className="app-header">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="app-logo-mark">ON</div>
           <div className="min-w-0">
-            <p className="truncate text-base font-bold" style={{ color: "var(--ink)" }}>Our Notes</p>
-            <p className="truncate text-xs" style={{ color: "var(--muted)" }}>A private space for two</p>
+            <p className="truncate text-base font-bold leading-none" style={{ color: "var(--app-text)" }}>
+              Our Notes
+            </p>
+            <p className="mt-1 truncate text-[11px] leading-none" style={{ color: "var(--app-pink)" }}>
+              for two
+            </p>
           </div>
         </div>
 
-        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-          <PresenceBadge presence={partnerPresence} partnerName={partnerName} />
-          <button onClick={logout} className="btn-ghost hidden sm:inline-flex">
-            🚪 Sign out
-          </button>
-          <button onClick={logout} className="btn-icon sm:hidden" aria-label="Sign out" title="Sign out">
-            🚪
-          </button>
+        <button className="app-icon-button" onClick={logout} type="button" aria-label="Sign out" title="Sign out">
+          <span aria-hidden="true">x</span>
+        </button>
+      </div>
+
+      <div className="mt-5">
+        <h1 className="text-2xl font-bold leading-tight" style={{ color: "var(--app-text)" }}>
+          {getGreeting()} <span style={{ color: "var(--app-pink)" }}>♡</span>
+        </h1>
+        <div className="mt-1.5 flex items-center gap-2">
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{ background: partnerPresence?.online ? "#34c759" : "var(--app-dimmed)" }}
+          />
+          <span className="text-sm" style={{ color: "var(--app-muted)" }}>
+            {partnerName} is {partnerPresence?.online ? "online" : "offline"}
+          </span>
         </div>
       </div>
-    </motion.header>
+    </header>
   );
 }

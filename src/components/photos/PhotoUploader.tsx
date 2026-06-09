@@ -36,39 +36,35 @@ export function PhotoUploader({ onUpload }: PhotoUploaderProps) {
   };
 
   return (
-    <section className="card space-y-3">
+    <section className="app-card space-y-3 p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="section-label">Shared photos</p>
-          <h2 className="text-xl font-bold">Photo drop</h2>
+          <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--app-muted)" }}>
+            Shared photos
+          </p>
+          <h2 className="text-xl font-bold" style={{ color: "var(--app-text)" }}>
+            Photo drop
+          </h2>
         </div>
-        {uploading && <span className="text-xs font-bold" style={{ color: "var(--muted)" }}>Uploading...</span>}
+        {uploading && (
+          <span className="text-xs font-bold" style={{ color: "var(--app-muted)" }}>
+            Uploading...
+          </span>
+        )}
       </div>
 
       {error && (
-        <div className="rounded-lg border px-3 py-2 text-sm font-semibold" style={{ background: "rgba(199, 95, 84, 0.10)", borderColor: "rgba(199, 95, 84, 0.28)", color: "var(--accent-strong)" }}>
+        <div className="rounded-2xl border px-3 py-2 text-sm font-semibold" style={{ background: "rgba(239, 68, 68, 0.08)", borderColor: "rgba(239, 68, 68, 0.22)", color: "var(--app-danger)" }}>
           {error}
         </div>
       )}
 
-      <input
-        ref={galleryInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(event) => handleFile(event.target.files?.[0])}
-      />
-      <input
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={(event) => handleFile(event.target.files?.[0])}
-      />
+      <input ref={galleryInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => handleFile(event.target.files?.[0])} />
+      <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(event) => handleFile(event.target.files?.[0])} />
 
       <input
-        className="input-base focus-ring"
+        className="w-full rounded-2xl border bg-transparent px-4 py-3 text-sm outline-none"
+        style={{ borderColor: "var(--app-border)", color: "var(--app-text)" }}
         value={caption}
         onChange={(event) => setCaption(event.target.value)}
         placeholder="Add a caption"
@@ -79,20 +75,20 @@ export function PhotoUploader({ onUpload }: PhotoUploaderProps) {
         <motion.button
           whileTap={{ scale: 0.98 }}
           type="button"
-          className="btn-ghost w-full"
+          className="app-ghost-button w-full"
           onClick={() => galleryInputRef.current?.click()}
           disabled={uploading}
         >
-          📸 Shared Photos
+          Shared Photos
         </motion.button>
         <motion.button
           whileTap={{ scale: 0.98 }}
           type="button"
-          className="btn-primary w-full"
+          className="app-primary-button w-full"
           onClick={() => cameraInputRef.current?.click()}
           disabled={uploading}
         >
-          ⚡ Instant Camera
+          Instant Camera
         </motion.button>
       </div>
     </section>
