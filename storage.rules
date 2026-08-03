@@ -1,0 +1,14 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /pairs/{pairId}/photos/{fileName} {
+      allow read, write: if request.auth != null && isPaired(pairId);
+    }
+
+    function isPaired(pairId) {
+      let pairDoc = firestore.get(/databases/(default)/documents/pairs/$(pairId));
+      return pairDoc.data.user1Id == request.auth.uid ||
+             pairDoc.data.user2Id == request.auth.uid;
+    }
+  }
+}

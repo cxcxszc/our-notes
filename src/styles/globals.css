@@ -1,0 +1,634 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --app-bg: #ffffff;
+  --app-card: #f8f8f8;
+  --app-card-alt: #f0f0f0;
+  --app-nav: rgba(248, 248, 248, 0.92);
+  --app-text: #1a1a1a;
+  --app-muted: #666666;
+  --app-dimmed: #999999;
+  --app-border: rgba(0, 0, 0, 0.08);
+  --app-pink: #f4a6c1;
+  --app-pink-soft: #f8c8dc;
+  --app-pink-border: rgba(244, 166, 193, 0.4);
+  --app-pink-surface: rgba(248, 200, 220, 0.14);
+  --app-overlay: rgba(0, 0, 0, 0.04);
+  --app-danger: #ef4444;
+  --ink: var(--app-text);
+  --muted: var(--app-muted);
+  --line: var(--app-border);
+  --accent: var(--app-pink);
+  --accent-strong: #d9467f;
+  --accent-soft: var(--app-pink-surface);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+.dark {
+  --app-bg: #0f0f0f;
+  --app-card: #181818;
+  --app-card-alt: #222222;
+  --app-nav: rgba(24, 24, 24, 0.92);
+  --app-text: #f5f0f2;
+  --app-muted: #8c8287;
+  --app-dimmed: #5c5558;
+  --app-border: rgba(255, 255, 255, 0.08);
+  --app-pink: #f4a6c1;
+  --app-pink-soft: #f8c8dc;
+  --app-pink-border: rgba(244, 166, 193, 0.3);
+  --app-pink-surface: rgba(244, 166, 193, 0.08);
+  --app-overlay: rgba(255, 255, 255, 0.04);
+  --app-danger: #ef4444;
+  --ink: var(--app-text);
+  --muted: var(--app-muted);
+  --line: var(--app-border);
+  --accent: var(--app-pink);
+  --accent-strong: #f8c8dc;
+  --accent-soft: var(--app-pink-surface);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+  --background: var(--app-bg);
+  --foreground: var(--app-text);
+  --card: var(--app-card);
+  --card-foreground: var(--app-text);
+  --popover: var(--app-card);
+  --popover-foreground: var(--app-text);
+  --primary: var(--app-pink);
+  --primary-foreground: #ffffff;
+  --secondary: var(--app-card-alt);
+  --secondary-foreground: var(--app-text);
+  --muted: var(--app-overlay);
+  --muted-foreground: var(--app-muted);
+  --accent: var(--app-pink);
+  --accent-foreground: #ffffff;
+  --destructive: var(--app-danger);
+  --destructive-foreground: #ffffff;
+  --border: var(--app-border);
+  --input: transparent;
+  --ring: var(--app-pink);
+}
+
+:root {
+  --background: var(--app-bg);
+  --foreground: var(--app-text);
+  --card: var(--app-card);
+  --card-foreground: var(--app-text);
+  --popover: var(--app-card);
+  --popover-foreground: var(--app-text);
+  --primary: var(--app-pink);
+  --primary-foreground: #ffffff;
+  --secondary: var(--app-card-alt);
+  --secondary-foreground: var(--app-text);
+  --muted: var(--app-overlay);
+  --muted-foreground: var(--app-muted);
+  --accent: var(--app-pink);
+  --accent-foreground: #ffffff;
+  --destructive: var(--app-danger);
+  --destructive-foreground: #ffffff;
+  --border: var(--app-border);
+  --input: transparent;
+  --ring: var(--app-pink);
+}
+
+/* ------------------------------------------------------------------ */
+/* Special Themes — Spider-Man & Barbie inspired palettes + lightweight */
+/* animated backgrounds. Backgrounds never sit above content (z-index   */
+/* stays behind .app-mobile-frame) so text/cards/nav stay fully legible. */
+/* ------------------------------------------------------------------ */
+
+.theme-spiderman-classic {
+  --app-pink: #e2233a;
+  --app-pink-soft: #ff5164;
+  --app-pink-border: rgba(226, 35, 58, 0.4);
+  --app-pink-surface: rgba(226, 35, 58, 0.12);
+  --accent-strong: #0b1f6e;
+}
+
+.theme-spiderman-verse {
+  --app-pink: #ff2ec4;
+  --app-pink-soft: #7b5bff;
+  --app-pink-border: rgba(255, 46, 196, 0.4);
+  --app-pink-surface: rgba(123, 91, 255, 0.16);
+  --accent-strong: #00e5ff;
+}
+
+.theme-symbiote {
+  --app-pink: #cbd5e1;
+  --app-pink-soft: #8b5cf6;
+  --app-pink-border: rgba(139, 92, 246, 0.35);
+  --app-pink-surface: rgba(139, 92, 246, 0.1);
+  --accent-strong: #ffffff;
+}
+
+.theme-barbie-dream {
+  --app-pink: #ff8fc8;
+  --app-pink-soft: #ffd1ec;
+  --app-pink-border: rgba(255, 143, 200, 0.4);
+  --app-pink-surface: rgba(255, 143, 200, 0.16);
+  --accent-strong: #c084fc;
+}
+
+.theme-barbie-glam {
+  --app-pink: #ff2e93;
+  --app-pink-soft: #ffd76b;
+  --app-pink-border: rgba(255, 46, 147, 0.4);
+  --app-pink-surface: rgba(255, 46, 147, 0.14);
+  --accent-strong: #ffd76b;
+}
+
+.theme-barbie-night {
+  --app-pink: #ff6fc0;
+  --app-pink-soft: #b76bff;
+  --app-pink-border: rgba(255, 111, 192, 0.35);
+  --app-pink-surface: rgba(255, 111, 192, 0.12);
+  --accent-strong: #b76bff;
+}
+
+.app-shell {
+  position: relative;
+  isolation: isolate;
+}
+
+.app-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  background-repeat: repeat;
+  transition: opacity 300ms ease;
+}
+
+.app-mobile-frame {
+  z-index: 1;
+}
+
+@keyframes ck-web-drift {
+  0% { background-position: 0 0, 0 0, 0 0; }
+  100% { background-position: 200px 200px, -200px 200px, 0 0; }
+}
+
+@keyframes ck-dot-drift {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 -400px; }
+}
+
+@keyframes ck-sparkle-drift {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+html.theme-spiderman-classic .app-shell::before {
+  opacity: 1;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(226, 35, 58, 0.07) 0 2px, transparent 2px 42px),
+    repeating-linear-gradient(-45deg, rgba(226, 35, 58, 0.07) 0 2px, transparent 2px 42px),
+    radial-gradient(circle at 15% 10%, rgba(11, 31, 110, 0.12), transparent 55%);
+  animation: ck-web-drift 40s linear infinite;
+}
+
+html.theme-spiderman-verse .app-shell::before {
+  opacity: 1;
+  background-image:
+    radial-gradient(1.5px 1.5px at 20px 30px, rgba(0, 229, 255, 0.5) 100%, transparent),
+    radial-gradient(1.5px 1.5px at 90px 120px, rgba(255, 46, 196, 0.5) 100%, transparent),
+    radial-gradient(1.5px 1.5px at 150px 60px, rgba(123, 91, 255, 0.5) 100%, transparent),
+    radial-gradient(circle at 80% 15%, rgba(255, 46, 196, 0.14), transparent 55%);
+  background-size: 200px 200px, 220px 220px, 180px 180px, 100% 100%;
+  animation: ck-dot-drift 26s linear infinite;
+}
+
+html.theme-symbiote .app-shell::before {
+  opacity: 1;
+  background-image:
+    radial-gradient(circle at 30% 20%, rgba(139, 92, 246, 0.16), transparent 45%),
+    radial-gradient(circle at 75% 70%, rgba(139, 92, 246, 0.1), transparent 50%),
+    repeating-linear-gradient(60deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 46px);
+  animation: ck-web-drift 50s linear infinite;
+}
+
+html.theme-barbie-dream .app-shell::before {
+  opacity: 1;
+  background-image:
+    radial-gradient(2px 2px at 10% 20%, rgba(255, 143, 200, 0.6), transparent),
+    radial-gradient(2px 2px at 60% 40%, rgba(192, 132, 252, 0.6), transparent),
+    radial-gradient(2px 2px at 85% 75%, rgba(255, 209, 236, 0.7), transparent),
+    radial-gradient(circle at 50% 0%, rgba(255, 143, 200, 0.14), transparent 55%);
+  background-size: 160px 160px, 200px 200px, 180px 180px, 100% 100%;
+  animation: ck-sparkle-drift 4s ease-in-out infinite;
+}
+
+html.theme-barbie-glam .app-shell::before {
+  opacity: 1;
+  background-image:
+    radial-gradient(2px 2px at 15% 25%, rgba(255, 215, 107, 0.7), transparent),
+    radial-gradient(2px 2px at 70% 55%, rgba(255, 46, 147, 0.6), transparent),
+    radial-gradient(2px 2px at 40% 80%, rgba(255, 215, 107, 0.7), transparent),
+    radial-gradient(circle at 85% 10%, rgba(255, 46, 147, 0.16), transparent 55%);
+  background-size: 150px 150px, 190px 190px, 170px 170px, 100% 100%;
+  animation: ck-sparkle-drift 3.2s ease-in-out infinite;
+}
+
+html.theme-barbie-night .app-shell::before {
+  opacity: 1;
+  background-image:
+    radial-gradient(2px 2px at 20% 30%, rgba(255, 111, 192, 0.6), transparent),
+    radial-gradient(2px 2px at 65% 65%, rgba(183, 107, 255, 0.6), transparent),
+    radial-gradient(2px 2px at 85% 20%, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(circle at 20% 80%, rgba(183, 107, 255, 0.16), transparent 55%);
+  background-size: 170px 170px, 210px 210px, 190px 190px, 100% 100%;
+  animation: ck-sparkle-drift 3.6s ease-in-out infinite;
+}
+
+.theme-swatch {
+  display: block;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.theme-swatch-spiderman-classic { background: linear-gradient(135deg, #e2233a, #0b1f6e); }
+.theme-swatch-spiderman-verse { background: linear-gradient(135deg, #ff2ec4, #7b5bff, #00e5ff); }
+.theme-swatch-symbiote { background: linear-gradient(135deg, #0f0f0f, #8b5cf6); }
+.theme-swatch-barbie-dream { background: linear-gradient(135deg, #ffd1ec, #c084fc); }
+.theme-swatch-barbie-glam { background: linear-gradient(135deg, #ff2e93, #ffd76b); }
+.theme-swatch-barbie-night { background: linear-gradient(135deg, #2a0845, #ff6fc0); }
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell::before {
+    animation: none !important;
+  }
+}
+
+@layer base {
+  html {
+    min-height: 100%;
+    background: var(--app-bg);
+    font-size: 16px;
+  }
+
+  body {
+    min-height: 100%;
+    margin: 0;
+    background: var(--app-bg);
+    color: var(--app-text);
+    font-family: var(--font-body), Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display), "Playfair Display", serif;
+  }
+
+  * {
+    box-sizing: border-box;
+    border-color: var(--app-border);
+  }
+
+  button,
+  input,
+  textarea {
+    font: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+@layer components {
+  .app-shell {
+    min-height: 100dvh;
+    background:
+      radial-gradient(circle at top left, rgba(248, 200, 220, 0.22), transparent 34rem),
+      var(--app-bg);
+  }
+
+  .app-mobile-frame {
+    margin-inline: auto;
+    min-height: 100dvh;
+    width: 100%;
+    max-width: 28rem;
+    background: var(--app-bg);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .app-scroll {
+    flex: 1;
+    overflow: auto;
+    padding-bottom: 7.25rem;
+  }
+
+  .app-section {
+    padding-inline: 1.5rem;
+  }
+
+  .app-header {
+    padding: 2.5rem 1.5rem 1.25rem;
+  }
+
+  .app-logo-mark {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--app-pink-soft), var(--app-pink));
+    color: #1a1a1a;
+    font-size: 0.8rem;
+    font-weight: 800;
+    box-shadow: 0 10px 24px rgba(244, 166, 193, 0.22);
+  }
+
+  .app-card {
+    border: 1px solid var(--app-border);
+    border-radius: 1.5rem;
+    background: var(--app-card);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+  }
+
+  .app-love-card {
+    border: 1px solid var(--app-pink-border);
+    border-radius: 1.5rem;
+    background: var(--app-pink-surface);
+    box-shadow: 0 8px 32px rgba(248, 200, 220, 0.18);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .app-chip {
+    min-height: 2.5rem;
+    border: 1px solid var(--app-pink-border);
+    border-radius: 999px;
+    background: var(--app-pink-surface);
+    color: var(--app-pink);
+    padding: 0.55rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 650;
+    transition: transform 160ms ease, opacity 160ms ease, background 160ms ease;
+  }
+
+  .app-chip:active {
+    transform: scale(0.97);
+  }
+
+  .app-icon-button {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 0;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--app-overlay);
+    color: var(--app-muted);
+    transition: transform 160ms ease, opacity 160ms ease;
+  }
+
+  .app-icon-button:active {
+    transform: scale(0.95);
+  }
+
+  .app-primary-button {
+    border: 0;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, var(--app-pink-soft), var(--app-pink));
+    color: #ffffff;
+    padding: 0.65rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 750;
+    box-shadow: 0 8px 24px rgba(248, 200, 220, 0.28);
+  }
+
+  .app-ghost-button {
+    border: 1px solid var(--app-border);
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    background: var(--app-overlay);
+    color: var(--app-muted);
+    padding: 0.65rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 650;
+  }
+
+  .app-segmented {
+    display: inline-flex;
+    border-radius: 1rem;
+    padding: 0.25rem;
+    background: var(--app-overlay);
+  }
+
+  .app-segmented button {
+    border: 0;
+    border-radius: 0.75rem;
+    background: transparent;
+    color: var(--app-muted);
+    padding: 0.5rem 1.25rem;
+    font-size: 0.875rem;
+    transition: all 160ms ease;
+  }
+
+  .app-segmented button[aria-pressed="true"] {
+    background: var(--app-pink);
+    color: #ffffff;
+    font-weight: 700;
+  }
+
+  .app-textarea {
+    width: 100%;
+    min-height: 5.75rem;
+    resize: vertical;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: var(--app-text);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .app-bottom-nav {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    z-index: 30;
+    width: min(100%, 28rem);
+    transform: translateX(-50%);
+    padding: 0.25rem 1rem 1rem;
+    pointer-events: none;
+  }
+
+  .app-bottom-nav-inner {
+    border: 1px solid var(--app-border);
+    border-radius: 1.75rem;
+    background: var(--app-nav);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0.5rem;
+    pointer-events: auto;
+  }
+
+  .app-nav-item {
+    min-width: 4rem;
+    border: 0;
+    border-radius: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    background: transparent;
+    color: var(--app-dimmed);
+    padding: 0.45rem 0.65rem;
+    font-size: 0.7rem;
+    text-decoration: none;
+  }
+
+  .app-nav-item[data-active="true"] {
+    background: var(--app-pink-surface);
+    color: var(--app-pink);
+    font-weight: 700;
+  }
+
+  .app-empty {
+    border: 1px dashed var(--app-border);
+    border-radius: 1.5rem;
+    background: var(--app-overlay);
+    color: var(--app-muted);
+    padding: 2rem;
+    text-align: center;
+    font-size: 0.875rem;
+  }
+
+  .app-container {
+    width: min(1120px, 100%);
+    margin: 0 auto;
+    padding-inline: 1rem;
+  }
+
+  .hero-panel,
+  .card {
+    border: 1px solid var(--app-border);
+    border-radius: 1.5rem;
+    background: var(--app-card);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+    padding: 1rem;
+  }
+
+  .section-label {
+    color: var(--app-muted);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
+  .input-base {
+    width: 100%;
+    border: 1px solid var(--app-border);
+    border-radius: 1rem;
+    background: var(--app-overlay);
+    color: var(--app-text);
+    padding: 0.8rem 1rem;
+    font-size: 0.95rem;
+    outline: none;
+  }
+
+  textarea.input-base {
+    min-height: 7rem;
+    resize: vertical;
+  }
+
+  .focus-ring:focus-visible,
+  .input-base:focus {
+    outline: 3px solid rgba(244, 166, 193, 0.22);
+    outline-offset: 2px;
+    border-color: var(--app-pink-border);
+  }
+
+  .btn-primary {
+    border: 0;
+    border-radius: 999px;
+    display: inline-flex;
+    min-height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, var(--app-pink-soft), var(--app-pink));
+    color: #ffffff;
+    padding: 0.65rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 750;
+  }
+
+  .btn-ghost {
+    border: 1px solid var(--app-border);
+    border-radius: 999px;
+    display: inline-flex;
+    min-height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    background: var(--app-overlay);
+    color: var(--app-muted);
+    padding: 0.65rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 650;
+  }
+
+  .btn-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 0;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--app-overlay);
+    color: var(--app-muted);
+  }
+
+  .segmented-control {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.25rem;
+    border-radius: 1rem;
+    padding: 0.25rem;
+    background: var(--app-overlay);
+  }
+
+  .segmented-control button {
+    border: 0;
+    border-radius: 0.75rem;
+    background: transparent;
+    color: var(--app-muted);
+    min-height: 2.4rem;
+    font-size: 0.875rem;
+  }
+
+  .segmented-control button[aria-pressed="true"] {
+    background: var(--app-pink);
+    color: #ffffff;
+    font-weight: 700;
+  }
+}

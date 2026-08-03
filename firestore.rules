@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /pairs/{pairId} {
+      allow read: if request.auth != null && (
+        resource.data.user1Id == request.auth.uid ||
+        resource.data.user2Id == request.auth.uid
+      );
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && (
+        resource.data.user1Id == request.auth.uid ||
+        resource.data.user2Id == request.auth.uid
+      );
+    }
+
+    match /notes/{noteId} {
+      allow read: if request.auth != null && isPaired(resource.data.pairId);
+      allow create: if request.auth != null && isPaired(request.resource.data.pairId);
+      allow update: if request.auth != null && isPaired(resource.data.pairId);
+      allow delete: if request.auth != null && resource.data.authorId == request.auth.uid;
+    }
+
+    match /photos/{photoId} {
+      allow read: if request.auth != null && isPaired(resource.data.pairId);
+      allow create: if request.auth != null && isPaired(request.resource.data.pairId);
+      allow update: if false;
+      allow delete: if request.auth != null && resource.data.authorId == request.auth.uid;
+    }
+
+    function isPaired(pairId) {
+      let pairDoc = get(/databases/$(database)/documents/pairs/$(pairId));
+      return pairDoc.data.user1Id == request.auth.uid ||
+             pairDoc.data.user2Id == request.auth.uid;
+    }
+  }
+}
