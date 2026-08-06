@@ -26,6 +26,13 @@ service cloud.firestore {
       allow delete: if request.auth != null && resource.data.authorId == request.auth.uid;
     }
 
+    match /messages/{messageId} {
+      allow read: if request.auth != null && isPaired(resource.data.pairId);
+      allow create: if request.auth != null && isPaired(request.resource.data.pairId);
+      allow update: if request.auth != null && isPaired(resource.data.pairId);
+      allow delete: if request.auth != null && resource.data.senderId == request.auth.uid;
+    }
+
     match /photos/{photoId} {
       allow read: if request.auth != null && isPaired(resource.data.pairId);
       allow create: if request.auth != null && isPaired(request.resource.data.pairId);

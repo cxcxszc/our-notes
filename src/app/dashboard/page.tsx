@@ -20,7 +20,19 @@ export default function DashboardPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const [partnerName, setPartnerName] = useState("Partner");
+  const [partnerPhotoURL, setPartnerPhotoURL] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"mine" | "theirs">("theirs");
+
+  // Remember the last selected Notes tab across visits.
+  useEffect(() => {
+    const saved = localStorage.getItem("ck-space-notes-tab");
+    if (saved === "mine" || saved === "theirs") setActiveTab(saved);
+  }, []);
+
+  const selectNotesTab = (tab: "mine" | "theirs") => {
+    setActiveTab(tab);
+    localStorage.setItem("ck-space-notes-tab", tab);
+  };
 
   const seenNoteIds = useRef<Set<string>>(new Set());
   const reactionCounts = useRef<Map<string, number>>(new Map());
@@ -44,7 +56,11 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!userProfile?.partnerId) return;
     getDoc(doc(db, "users", userProfile.partnerId)).then((snap) => {
-      if (snap.exists()) setPartnerName(snap.data().displayName || "Partner");
+      if (snap.exists()) {
+        const data = snap.data();
+        setPartnerName(data.displayName || "Partner");
+        setPartnerPhotoURL(data.photoURL || null);
+      }
     });
   }, [userProfile?.partnerId]);
 
@@ -117,7 +133,7 @@ export default function DashboardPage() {
 
           {/* Mini Games entry point (replaces the old love-note banner) */}
           <section className="app-section mb-6">
-            <MiniGamesCard />
+            <MiniGamesCard uid={user.uid} />
           </section>
 
           {/* Add New Note / Leave a Note */}
@@ -125,14 +141,17 @@ export default function DashboardPage() {
             <AddNoteForm onAdd={handleAddNote} partnerName={partnerName} />
           </section>
 
-          {/* Notes Feed - Segment Selector */}
+          {/* Communication Tabs: Message / Partner Notes / My Notes */}
           <section className="app-section mb-5">
-            <div className="app-segmented">
-              <button onClick={() => setActiveTab("theirs")} aria-pressed={activeTab === "theirs"} type="button">
-                {partnerName}&apos;s Notes
+            <div className="app-segmented grid w-full grid-cols-3 gap-1 text-center text-xs">
+              <button onClick={() => router.push("/chat")} type="button">
+                Message
               </button>
-              <button onClick={() => setActiveTab("mine")} aria-pressed={activeTab === "mine"} type="button">
-                My Notes
+              <button onClick={() => selectNotesTab("theirs")} aria-pressed={activeTab === "theirs"} type="button">
+                {partnerName} Notes
+              </button>
+              <button onClick={() => selectNotesTab("mine")} aria-pressed={activeTab === "mine"} type="button">
+                {userProfile.displayName} Notes
               </button>
             </div>
           </section>
@@ -153,6 +172,7 @@ export default function DashboardPage() {
                     note={note}
                     currentUserId={user.uid}
                     isMine={note.authorId === user.uid}
+                    authorPhotoURL={note.authorId === user.uid ? userProfile.photoURL ?? null : partnerPhotoURL}
                     onDelete={deleteNote}
                     onEdit={updateNote}
                     onTogglePin={togglePin}
@@ -171,7 +191,11 @@ export default function DashboardPage() {
       <FloatingWidget
         latestUnreadPartnerNote={latestUnreadPartnerNote}
         partnerName={partnerName}
-        onOpenNote={markNoteViewed}
+        onOpenNote={() => {
+          if (!latestUnreadPartnerNote) return;
+          selectNotesTab("theirs");
+          markNoteViewed(latestUnreadPartnerNote.id);
+        }}
       />
     </div>
   );

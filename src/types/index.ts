@@ -27,6 +27,20 @@ export interface Note {
   lastViewedAt?: Date | null;
 }
 
+export interface Message {
+  id: string;
+  pairId: string;
+  senderId: string;
+  senderName: string;
+  content: string;
+  createdAt: Date;
+  seenBy: string[];
+  reactions: Record<string, string[]>;
+  replyToId?: string | null;
+  replyToPreview?: string | null;
+  replyToSenderName?: string | null;
+}
+
 export interface SharedPhoto {
   id: string;
   pairId: string;

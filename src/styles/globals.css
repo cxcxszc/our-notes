@@ -264,6 +264,43 @@ html.theme-barbie-night .app-shell::before {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* Chat typing indicator + profile heartbeat animation                 */
+/* ------------------------------------------------------------------ */
+
+@keyframes ck-typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+.ck-typing-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--app-pink);
+  animation: ck-typing-bounce 1s ease-in-out infinite;
+}
+
+@keyframes ck-heartbeat {
+  0%, 100% { transform: scale(1); }
+  15% { transform: scale(1.25); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.18); }
+  60% { transform: scale(1); }
+}
+
+.ck-heartbeat {
+  animation: ck-heartbeat 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ck-typing-dot,
+  .ck-heartbeat {
+    animation: none !important;
+  }
+}
+
 @layer base {
   html {
     min-height: 100%;

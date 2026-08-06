@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import { useHighScore } from "@/hooks/useHighScore";
 
 /* ------------------------------------------------------------------ */
 /*  Entry point: the card shown on the dashboard (same slot/size as    */
 /*  the old "I love you, always" banner) + the modal it opens.         */
 /* ------------------------------------------------------------------ */
 
-export function MiniGamesCard() {
+export function MiniGamesCard({ uid }: { uid?: string }) {
   const [open, setOpen] = useState(false);
   const [showHint, setShowHint] = useState(true);
 
@@ -35,7 +36,7 @@ export function MiniGamesCard() {
         )}
       </button>
 
-      <AnimatePresence>{open && <MiniGamesModal onClose={() => setOpen(false)} />}</AnimatePresence>
+      <AnimatePresence>{open && <MiniGamesModal uid={uid} onClose={() => setOpen(false)} />}</AnimatePresence>
     </>
   );
 }
@@ -49,7 +50,7 @@ const GAMES: { id: GameId; label: string; emoji: string }[] = [
   { id: "reaction", label: "Reflex", emoji: "⚡" },
 ];
 
-function MiniGamesModal({ onClose }: { onClose: () => void }) {
+function MiniGamesModal({ uid, onClose }: { uid?: string; onClose: () => void }) {
   const [active, setActive] = useState<GameId>("runner");
 
   return (
@@ -98,10 +99,10 @@ function MiniGamesModal({ onClose }: { onClose: () => void }) {
           className="overflow-hidden rounded-2xl"
           style={{ background: "var(--app-overlay)", border: "1px solid var(--app-border)" }}
         >
-          {active === "runner" && <EndlessRunner />}
-          {active === "basketball" && <TapBasketball />}
-          {active === "dice" && <LuckyDice />}
-          {active === "reaction" && <ReactionTest />}
+          {active === "runner" && <EndlessRunner uid={uid} />}
+          {active === "basketball" && <TapBasketball uid={uid} />}
+          {active === "dice" && <LuckyDice uid={uid} />}
+          {active === "reaction" && <ReactionTest uid={uid} />}
         </div>
       </motion.div>
     </motion.div>
@@ -114,10 +115,10 @@ function MiniGamesModal({ onClose }: { onClose: () => void }) {
 /*  existing runner game; all shapes/assets drawn here are original.   */
 /* ------------------------------------------------------------------ */
 
-function EndlessRunner() {
+function EndlessRunner({ uid }: { uid?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [score, setScore] = useState(0);
-  const [best, setBest] = useState(0);
+  const [best, reportScore] = useHighScore(uid, "runner", "max");
   const [gameOver, setGameOver] = useState(false);
   const [running, setRunning] = useState(false);
 
@@ -128,9 +129,11 @@ function EndlessRunner() {
     frame: 0,
     speed: 4,
   });
+  const scoreRef = useRef(0);
 
   const reset = useCallback(() => {
     state.current = { playerY: 0, velocity: 0, obstacleX: 300, frame: 0, speed: 4 };
+    scoreRef.current = 0;
     setScore(0);
     setGameOver(false);
     setRunning(true);
@@ -175,7 +178,8 @@ function EndlessRunner() {
       s.obstacleX -= s.speed;
       if (s.obstacleX < -20) {
         s.obstacleX = W + Math.random() * 120;
-        setScore((prev) => prev + 1);
+        scoreRef.current += 1;
+        setScore(scoreRef.current);
         s.speed = Math.min(9, s.speed + 0.25);
       }
 
@@ -206,7 +210,7 @@ function EndlessRunner() {
       if (collide) {
         setGameOver(true);
         setRunning(false);
-        setBest((b) => Math.max(b, score));
+        reportScore(scoreRef.current);
         return;
       }
 
@@ -228,7 +232,7 @@ function EndlessRunner() {
         style={{ background: "var(--app-card)", touchAction: "manipulation" }}
       />
       <p className="mt-2 text-xs font-bold" style={{ color: "var(--app-muted)" }}>
-        Score {score} · Best {best}
+        Score {score} · Your Best {best ?? 0}
       </p>
       <p className="mt-1 text-[11px]" style={{ color: "var(--app-dimmed)" }}>
         {!running && !gameOver && "Tap to start · tap to jump"}
@@ -244,10 +248,11 @@ function EndlessRunner() {
 /*  a target zone; tap while it's inside the pink zone to score.        */
 /* ------------------------------------------------------------------ */
 
-function TapBasketball() {
+function TapBasketball({ uid }: { uid?: string }) {
   const [markerX, setMarkerX] = useState(0);
   const [direction, setDirection] = useState(1);
   const [score, setScore] = useState(0);
+  const [best, reportScore] = useHighScore(uid, "basketball", "max");
   const [feedback, setFeedback] = useState<"hit" | "miss" | null>(null);
   const rafRef = useRef<number>(0);
 
@@ -279,7 +284,13 @@ function TapBasketball() {
   const shoot = () => {
     const hit = markerX >= zoneStart && markerX <= zoneEnd;
     setFeedback(hit ? "hit" : "miss");
-    if (hit) setScore((s) => s + 1);
+    if (hit) {
+      setScore((s) => {
+        const next = s + 1;
+        reportScore(next);
+        return next;
+      });
+    }
     setTimeout(() => setFeedback(null), 400);
   };
 
@@ -303,7 +314,7 @@ function TapBasketball() {
         Shoot 🏀
       </button>
       <p className="mt-3 text-xs font-bold" style={{ color: "var(--app-muted)" }}>
-        Score {score}
+        Score {score} · Your Best {best ?? 0}
       </p>
       {feedback && (
         <p className="mt-1 text-sm font-bold" style={{ color: feedback === "hit" ? "var(--app-pink)" : "var(--app-dimmed)" }}>
@@ -320,11 +331,11 @@ function TapBasketball() {
 
 const DICE_FACES = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
 
-function LuckyDice() {
+function LuckyDice({ uid }: { uid?: string }) {
   const [face, setFace] = useState(0);
   const [rolling, setRolling] = useState(false);
   const [rolls, setRolls] = useState(0);
-  const [best, setBest] = useState(0);
+  const [best, reportScore] = useHighScore(uid, "dice", "max");
 
   const roll = () => {
     if (rolling) return;
@@ -339,7 +350,7 @@ function LuckyDice() {
         setFace(result);
         setRolling(false);
         setRolls((r) => r + 1);
-        setBest((b) => Math.max(b, result + 1));
+        reportScore(result + 1);
       }
     }, 60);
   };
@@ -360,7 +371,7 @@ function LuckyDice() {
         {rolling ? "Rolling..." : "Roll the dice 🎲"}
       </button>
       <p className="mt-3 text-xs font-bold" style={{ color: "var(--app-muted)" }}>
-        Rolls {rolls} · Best {best}
+        Rolls {rolls} · Your Best {best ?? 0}
       </p>
     </div>
   );
@@ -370,10 +381,10 @@ function LuckyDice() {
 /*  Reaction Test — wait for the panel to turn green, then tap fast.    */
 /* ------------------------------------------------------------------ */
 
-function ReactionTest() {
+function ReactionTest({ uid }: { uid?: string }) {
   const [status, setStatus] = useState<"idle" | "waiting" | "go" | "early" | "result">("idle");
   const [reactionMs, setReactionMs] = useState<number | null>(null);
-  const [best, setBest] = useState<number | null>(null);
+  const [best, reportScore] = useHighScore(uid, "reaction", "min");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const goAtRef = useRef(0);
 
@@ -400,7 +411,7 @@ function ReactionTest() {
     if (status === "go") {
       const ms = Math.round(performance.now() - goAtRef.current);
       setReactionMs(ms);
-      setBest((b) => (b === null ? ms : Math.min(b, ms)));
+      reportScore(ms);
       setStatus("result");
     }
   };
@@ -441,7 +452,7 @@ function ReactionTest() {
       </button>
       {best !== null && (
         <p className="mt-3 text-xs font-bold" style={{ color: "var(--app-muted)" }}>
-          Best reaction: {best} ms
+          Your Best reaction: {best} ms
         </p>
       )}
     </div>

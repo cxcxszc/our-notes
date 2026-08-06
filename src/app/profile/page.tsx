@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Copy, Bell, LogOut, Trash2, ChevronRight, Heart, Sun, Moon, Smartphone, Check, User, Camera, X } from "lucide-react";
+import { Copy, Bell, LogOut, Trash2, Heart, Sun, Moon, Smartphone, Check, User, Camera, X } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { BottomNav } from "@/components/ui/BottomNav";
 import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
@@ -117,6 +117,7 @@ export default function ProfilePage() {
   const router = useRouter();
 
   const [partnerName, setPartnerName] = useState("Partner");
+  const [partnerPhotoURL, setPartnerPhotoURL] = useState<string | null>(null);
   const [pairCreatedAt, setPairCreatedAt] = useState<Date | null>(null);
   const [copied, setCopied] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
@@ -125,7 +126,6 @@ export default function ProfilePage() {
 
   // Settings states
   const [theme, setThemeState] = useState<ThemeMode>("system");
-  const [storageSave, setStorageSave] = useState(true);
 
   const [notificationState, setNotificationState] = useState<
     "idle" | "loading" | "enabled" | "unsupported" | "denied"
@@ -194,7 +194,11 @@ export default function ProfilePage() {
 
     if (userProfile.partnerId) {
       getDoc(doc(db, "users", userProfile.partnerId)).then((snap) => {
-        if (snap.exists()) setPartnerName(snap.data().displayName || "Partner");
+        if (snap.exists()) {
+          const data = snap.data();
+          setPartnerName(data.displayName || "Partner");
+          setPartnerPhotoURL(data.photoURL || null);
+        }
       });
     }
 
@@ -326,53 +330,75 @@ export default function ProfilePage() {
                 boxShadow: "0 8px 32px rgba(248,200,220,0.1)",
               }}
             >
-              {/* Avatar circle */}
-              <div className="relative mx-auto mb-2 w-20 h-20">
+              {/* Both connected users, joined by an animated heartbeat heart */}
+              <div className="mx-auto mb-3 flex items-center justify-center gap-3">
+                {/* My avatar (editable) */}
+                <div className="relative h-16 w-16 shrink-0">
+                  <div
+                    className="h-16 w-16 rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-md overflow-hidden"
+                    style={{ background: "linear-gradient(135deg, #F8C8DC 0%, #F4A6C1 100%)" }}
+                  >
+                    {userProfile.photoURL ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={userProfile.photoURL} alt={userProfile.displayName} className="h-full w-full object-cover" />
+                    ) : userProfile.displayName ? (
+                      userProfile.displayName.charAt(0).toUpperCase()
+                    ) : (
+                      <User />
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={photoUploading}
+                    className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full shadow-md"
+                    style={{ background: "var(--app-card)", border: "1px solid var(--app-pink-border)" }}
+                    aria-label="Change profile photo"
+                    title="Change photo"
+                  >
+                    <Camera className="h-3 w-3" style={{ color: "var(--app-pink)" }} />
+                  </button>
+                  {userProfile.photoURL && (
+                    <button
+                      type="button"
+                      onClick={handleRemovePhoto}
+                      className="absolute bottom-0 left-0 flex h-6 w-6 items-center justify-center rounded-full shadow-md"
+                      style={{ background: "var(--app-card)", border: "1px solid var(--app-border)" }}
+                      aria-label="Remove profile photo"
+                      title="Remove photo"
+                    >
+                      <X className="h-3 w-3" style={{ color: "var(--app-danger)" }} />
+                    </button>
+                  )}
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => handlePhotoSelect(event.target.files?.[0])}
+                  />
+                </div>
+
+                <Heart
+                  className="ck-heartbeat h-6 w-6 shrink-0"
+                  style={{ color: "var(--app-pink)", fill: "var(--app-pink)" }}
+                  aria-hidden="true"
+                />
+
+                {/* Partner avatar */}
                 <div
-                  className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-md overflow-hidden"
-                  style={{
-                    background: "linear-gradient(135deg, #F8C8DC 0%, #F4A6C1 100%)",
-                  }}
+                  className="h-16 w-16 shrink-0 rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-md overflow-hidden"
+                  style={{ background: "linear-gradient(135deg, #F4A6C1 0%, #F8C8DC 100%)" }}
                 >
-                  {userProfile.photoURL ? (
+                  {partnerPhotoURL ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={userProfile.photoURL} alt={userProfile.displayName} className="h-full w-full object-cover" />
-                  ) : userProfile.displayName ? (
-                    userProfile.displayName.charAt(0).toUpperCase()
+                    <img src={partnerPhotoURL} alt={partnerName} className="h-full w-full object-cover" />
+                  ) : partnerName ? (
+                    partnerName.charAt(0).toUpperCase()
                   ) : (
                     <User />
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => photoInputRef.current?.click()}
-                  disabled={photoUploading}
-                  className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full shadow-md"
-                  style={{ background: "var(--app-card)", border: "1px solid var(--app-pink-border)" }}
-                  aria-label="Change profile photo"
-                  title="Change photo"
-                >
-                  <Camera className="h-3.5 w-3.5" style={{ color: "var(--app-pink)" }} />
-                </button>
-                {userProfile.photoURL && (
-                  <button
-                    type="button"
-                    onClick={handleRemovePhoto}
-                    className="absolute bottom-0 left-0 flex h-7 w-7 items-center justify-center rounded-full shadow-md"
-                    style={{ background: "var(--app-card)", border: "1px solid var(--app-border)" }}
-                    aria-label="Remove profile photo"
-                    title="Remove photo"
-                  >
-                    <X className="h-3.5 w-3.5" style={{ color: "var(--app-danger)" }} />
-                  </button>
-                )}
-                <input
-                  ref={photoInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(event) => handlePhotoSelect(event.target.files?.[0])}
-                />
               </div>
               {photoUploading && (
                 <p className="mb-2 text-xs font-semibold" style={{ color: "var(--app-muted)" }}>
@@ -385,10 +411,10 @@ export default function ProfilePage() {
                 </p>
               )}
               <h2 className="text-xl font-bold mb-1" style={{ color: "var(--app-text)" }}>
-                {userProfile.displayName}
+                {userProfile.displayName} &amp; {partnerName}
               </h2>
               <p className="text-sm mb-4" style={{ color: "var(--app-muted)" }}>
-                Connected with {partnerName} ❤️
+                Connected ❤️
               </p>
 
               {/* Days Together pill */}
@@ -566,17 +592,6 @@ export default function ProfilePage() {
                     }}
                   />
                 }
-              />
-              <SettingRow
-                icon={<span className="text-sm">📁</span>}
-                title="Save Voice Notes"
-                subtitle="Auto-save recordings locally"
-                right={<Toggle value={storageSave} onChange={setStorageSave} />}
-              />
-              <SettingRow
-                icon={<span className="text-sm">🔒</span>}
-                title="Privacy Settings"
-                right={<ChevronRight className="w-4 h-4" style={{ color: "var(--app-dimmed)" }} />}
               />
             </div>
           </div>

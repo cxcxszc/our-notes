@@ -15,6 +15,7 @@ interface NoteCardProps {
   onReact: (id: string, emoji: ReactionEmoji) => void;
   onView?: (id: string) => void;
   isMine: boolean;
+  authorPhotoURL?: string | null;
 }
 
 export function NoteCard({
@@ -26,6 +27,7 @@ export function NoteCard({
   onReact,
   onView,
   isMine,
+  authorPhotoURL,
 }: NoteCardProps) {
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState(note.content);
@@ -58,7 +60,22 @@ export function NoteCard({
     setEditing(false);
   };
 
-  const authorLabel = isMine ? "From You" : `From ${note.authorName}`;
+  const authorLabel = isMine ? "You" : note.authorName;
+
+  const AuthorAvatar = ({ size = "h-6 w-6 text-[10px]" }: { size?: string }) => (
+    <span
+      className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-full font-bold text-white`}
+      style={{ background: "linear-gradient(135deg, #F8C8DC 0%, #F4A6C1 100%)" }}
+      aria-hidden="true"
+    >
+      {authorPhotoURL ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={authorPhotoURL} alt="" className="h-full w-full object-cover" />
+      ) : (
+        authorLabel.charAt(0).toUpperCase()
+      )}
+    </span>
+  );
 
   // Unread partner note: show a closed-envelope teaser. Tapping it is what
   // marks the note as read — no separate "mark as read" control.
@@ -117,9 +134,7 @@ export function NoteCard({
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-xl" aria-hidden="true">
-              💌
-            </span>
+            <AuthorAvatar />
             <p className="truncate text-sm font-bold" style={{ color: "var(--app-pink)" }}>
               {authorLabel}
             </p>

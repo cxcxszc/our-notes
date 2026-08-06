@@ -2,87 +2,74 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Mail } from "lucide-react";
 import { Note } from "@/types";
-import { formatNoteTime } from "@/lib/utils";
 
 interface FloatingWidgetProps {
   latestUnreadPartnerNote: Note | null;
   partnerName: string;
-  onOpenNote: (noteId: string) => void;
+  onOpenNote: () => void;
 }
 
-export function FloatingWidget({ latestUnreadPartnerNote, partnerName, onOpenNote }: FloatingWidgetProps) {
-  const [minimized, setMinimized] = useState(false);
+export function FloatingWidget({ latestUnreadPartnerNote, onOpenNote }: FloatingWidgetProps) {
   const [visible, setVisible] = useState(false);
   const shownNoteIdRef = useRef<string | null>(null);
+  const fadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Only pop up when a *new* unread note shows up. Once a note is marked
-  // read (isRead flips in Firestore), latestUnreadPartnerNote goes null/changes
-  // and the popup hides itself automatically.
+  // Pop up only when a *new* unread note shows up, then fade itself out
+  // automatically after 5 seconds — it never previews the note content.
   useEffect(() => {
     if (latestUnreadPartnerNote && latestUnreadPartnerNote.id !== shownNoteIdRef.current) {
       shownNoteIdRef.current = latestUnreadPartnerNote.id;
       setVisible(true);
-      setMinimized(false);
+
+      if (fadeTimer.current) clearTimeout(fadeTimer.current);
+      fadeTimer.current = setTimeout(() => setVisible(false), 5000);
     }
     if (!latestUnreadPartnerNote) {
       setVisible(false);
     }
+    return () => {
+      if (fadeTimer.current) clearTimeout(fadeTimer.current);
+    };
   }, [latestUnreadPartnerNote]);
 
-  if (!visible || !latestUnreadPartnerNote) return null;
+  if (!latestUnreadPartnerNote) return null;
 
   const handleOpen = () => {
-    onOpenNote(latestUnreadPartnerNote.id);
+    setVisible(false);
+    onOpenNote();
   };
 
   return (
-    <div className="fixed right-4 top-4 z-50 w-[calc(100vw-32px)] max-w-[320px]">
+    <div className="fixed right-4 top-4 z-50 w-[calc(100vw-32px)] max-w-[260px]">
       <AnimatePresence>
-        {!minimized ? (
-          <motion.div
-            key="expanded"
+        {visible && (
+          <motion.button
+            type="button"
+            onClick={handleOpen}
             initial={{ opacity: 0, y: -12, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.96 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className="app-card p-4"
+            className="app-card flex w-full items-center gap-2.5 p-3 text-left"
+            aria-label={`New note from ${latestUnreadPartnerNote.authorName}`}
           >
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="truncate text-xs font-bold" style={{ color: "var(--app-text)" }}>
-                New note from {partnerName}
-              </p>
-              <div className="flex gap-1">
-                <button onClick={() => setMinimized(true)} className="app-icon-button h-7 w-7 text-xs" aria-label="Minimize widget" title="Minimize" type="button">
-                  _
-                </button>
-                <button onClick={() => setVisible(false)} className="app-icon-button h-7 w-7 text-xs" aria-label="Close widget" title="Close" type="button">
-                  x
-                </button>
-              </div>
-            </div>
-
-            <button className="block w-full text-left" onClick={handleOpen} type="button" aria-label="Open note and mark as read">
-              <p className="break-words text-sm leading-relaxed" style={{ color: "var(--app-text)" }}>
-                {latestUnreadPartnerNote.content}
-              </p>
-              <p className="mt-2 text-xs" style={{ color: "var(--app-dimmed)" }}>
-                {formatNoteTime(latestUnreadPartnerNote.createdAt)}
-              </p>
-            </button>
-          </motion.div>
-        ) : (
-          <motion.button
-            key="minimized"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            onClick={() => setMinimized(false)}
-            className="app-chip ml-auto flex"
-            type="button"
-            aria-label="Open latest note"
-          >
-            New
+            <span
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+              style={{ background: "var(--app-pink-surface)" }}
+              aria-hidden="true"
+            >
+              <Mail className="h-4 w-4" style={{ color: "var(--app-pink)" }} />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-xs font-extrabold tracking-wide" style={{ color: "var(--app-pink)" }}>
+                NEW NOTE
+              </span>
+              <span className="block truncate text-xs" style={{ color: "var(--app-muted)" }}>
+                from {latestUnreadPartnerNote.authorName}
+              </span>
+            </span>
           </motion.button>
         )}
       </AnimatePresence>
